@@ -1,0 +1,115 @@
+app.solr - Solr binding
+
+This module provides a Gauche interface to Solr, an open source
+search engine from Apache Lucene project.
+
+   http://lucene.apache.org/solr/
+
+We require Solr 3.1 or later.   This moduce accesses Solr via
+its REST interface, so a Solr server process must be running.
+
+As of 5/17/2011, this module requires development HEAD of Gauche;
+Gauche 0.9.1 doesn't work.
+
+
+SYNOPSYS
+
+  (use app.solr)
+
+  (define *solr* (make <solr> :uri "http://localhost:8983/solr"))
+
+  (solr-add *solr* '((id . 123)
+                     (name . "Gauche manual")
+                     (author . "Shiro Kawai")))
+
+  (solr-commit *solr*)
+
+  (solr-optimize *solr*)
+
+  (solr-query *solr* :query "author:Shiro Kawai")
+
+  (solr-delete *solr* :ids '(123 456)
+                      :queries '("author:Shiro Kawai"))
+
+  (solr-rollback *solr*)
+
+
+DESCRIPTION
+
+  <solr>
+
+    A class to manage communication with a specific Solr server.
+    You have to give a uri of the endpoint to :uri initial argument.
+    APIs expect an instance of this class as the first argument.
+
+  <solr-error>
+
+    If Solr returns an error, APIs raises this condition.
+    Those slots are filled:
+
+    status - the response status, e.g. "500" for internal error etc.
+    headers - parsed response headers.  you can retrieve fields by
+              rfc822-header-ref (see rfc.822).
+    body   - parsed response body, in SXML.
+
+  solr-add solr doc :key (commit #f) (overwrite #t)
+
+    Add a document.  DOC can be an alist ((field-name . field-value) ...)
+    or any instance of <dictionary>.
+
+    For the field value, Scheme real numbers, strings and symbols are
+    converted to strings, and <date> objects (see srfi-19) are passed
+    as ISO-8601 date string (after adjusted timezone to be zero).
+    If field-value is a list, it is passed as a multivalue field.
+    
+    If the keyword argument commit is true, the change is committed
+    before returning from this method.  Default is #f.
+
+    If the keyword argument overwrite is true, a record with matching
+    field declared as uniqueKey in the schema will be replaced by the
+    passed record.  Default is #t.
+
+  solr-add* solr docs :key (commit #f) (overwrite #t)
+
+    Like solr-add, but you can pass a list of records.
+    It is much more efficient than adding one record at a time.
+
+  solr-commit solr :key (wait-flush #t) (wait-searcher #t)
+                        (expunge-deletes #t)
+
+    Commit the change.
+
+  solr-optimize solr :key (wait-flush #t) (wait-searcher #t)
+                          (max-segments 1)
+
+    Tell Solr server to optimize intex files.  
+
+  solr-rollback solr
+
+    Rollback uncommitted changes.
+
+  solr-delete solr :key (ids '()) (queries '()) (commit #f)
+
+    Deletes records by matching ids (values of uniqueKey field) or
+    queries.  Both can be specified at the same time.  If commit
+    keyword argument is true, the deletes are committed before
+    returning from this method.
+
+  solr-query solr :key (query "*:*") (fields "*") (search-name "select")
+                       (score #t) (sort #f) (params '()) (result-type 'alist)
+
+    Searches document.   See the Solr document for the detailed syntax
+    of query, fields and sort.
+    If the schema defines alternativea search handlers, you can
+    specify one by search-name argument.
+
+    Return value depends on RESULT-TYPE argument.  It can be either
+    one of alist, sxml, or full.   The default is alist.
+    If it is alist, each record in the query result is converted into
+    alist, and list of alists are returned.
+    If it is sxml, a list of 'doc' nodes (in SXML) are extracted and
+    returned.
+    If it is full, the entire SXML document (from *TOP*) is returned.
+
+    
+
