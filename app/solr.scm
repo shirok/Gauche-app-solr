@@ -93,7 +93,7 @@
 (define (result-converter result-type)
   (case result-type
     [(sxml)  extract-docs]
-    [(full)  identity]
+    [(whole) identity]
     [(alist) (^x (map sxml-record->alist (extract-docs x)))]
     ;; TODO: other dictionary types.
     [else

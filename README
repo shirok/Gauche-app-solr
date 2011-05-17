@@ -104,12 +104,12 @@ DESCRIPTION
     specify one by search-name argument.
 
     Return value depends on RESULT-TYPE argument.  It can be either
-    one of alist, sxml, or full.   The default is alist.
+    one of alist, sxml, or whole.   The default is alist.
     If it is alist, each record in the query result is converted into
     alist, and list of alists are returned.
     If it is sxml, a list of 'doc' nodes (in SXML) are extracted and
     returned.
-    If it is full, the entire SXML document (from *TOP*) is returned.
+    If it is whole, the entire SXML document (from *TOP*) is returned.
 
     
 
