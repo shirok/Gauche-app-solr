@@ -106,17 +106,18 @@
   (map (^n (cons (string->symbol (sxml-field->key n)) (sxml-field->value n)))
        (sxml:child-nodes doc)))
 
-(define sxml-field->key-name (if-car-sxpath '(@ name *text*)))
+(define sxml-field->key (if-car-sxpath '(@ name *text*)))
 
 (define (sxml-field->value node) ;; returns [SXML] -> Obj
   (define (convert children)
     (case (sxml:node-name node)
-      [(str) (car children)]    ; assuming first child is *text*
-      [(arr) (map sxml-field->value children)]
+      [(str)   (x->string (car children))]
+      [(arr)   (map sxml-field->value children)]
       [(int)   (x->integer (car children))]
       [(float) (x->number (car children))]
       [(bool)  (not (equal? (car children) "false"))]
-      ;; TODO: support all types!
+      [(date)  (string->date (car children) "~Y-~m-~dT~H:~M:~S~z")]
+      ;; TODO: have we exhausted all possible types?
       [else (error "couldn't convert field node:" node)]))
   (convert (sxml:child-nodes node)))
   
