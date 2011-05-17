@@ -103,16 +103,19 @@
 (define extract-docs (sxpath '(// doc)))
 
 (define (sxml-record->alist doc)
-  (map (^n (cons (sxml-field->key n) (sxml-field->value n)))
+  (map (^n (cons (string->symbol (sxml-field->key n)) (sxml-field->value n)))
        (sxml:child-nodes doc)))
 
-(define sxml-field->key (if-car-sxpath '(@ name *text*)))
+(define sxml-field->key-name (if-car-sxpath '(@ name *text*)))
 
 (define (sxml-field->value node) ;; returns [SXML] -> Obj
   (define (convert children)
     (case (sxml:node-name node)
       [(str) (car children)]    ; assuming first child is *text*
       [(arr) (map sxml-field->value children)]
+      [(int)   (x->integer (car children))]
+      [(float) (x->number (car children))]
+      [(bool)  (not (equal? (car children) "false"))]
       ;; TODO: support all types!
       [else (error "couldn't convert field node:" node)]))
   (convert (sxml:child-nodes node)))
@@ -179,7 +182,9 @@
 (define (value->sxml val)
   (cond
    [((any-pred real? string? symbol?) val) (x->string val)]
-   [(date? val) (date->string (time-utc->date (date->time-utc val) 0) "~4")]))
+   [(boolean? val) (xbool val)]
+   [(date? val) (date->string (time-utc->date (date->time-utc val) 0) "~4")]
+   [else (errorf "Couldn't convert Scheme value ~a to Solr value." val)]))
 
 (define (good-alist? rec)
   (and (list? rec)
