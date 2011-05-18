@@ -121,10 +121,10 @@
     [(sxml)  extract-docs]
     [(whole) identity]
     [(alist) (^x (map sxml-record->alist (extract-docs x)))]
-    ;; TODO: other dictionary types.
+    ;; TODO: support other dictionary types.
     [else
-     (error "result-converter must be either one of sxml, full, alist, but got:"
-            result-type)]))
+     (error "result-converter must be either one of sxml, whole, or alist, \
+             but got:" result-type)]))
 
 (define extract-docs (sxpath '(// doc)))
 
