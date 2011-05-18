@@ -110,5 +110,16 @@ DESCRIPTION
     returned.
     If it is whole, the entire SXML document (from *TOP*) is returned.
 
-    
+    PARAMS argument can be used to pass additional parameters.
+    For example, the following call can retrieve "highlighting"
+    section in which the hit word in description is highlighted:
 
+    (solr-query solr :query "description:video"
+                     :params '((hl "true") (hl.fl "description"))
+                     :result-type 'whole)
+
+    Note that highlighting information is returned in an additional
+    section, rather than the list of <doc> nodes, so you need to get
+    the result as 'whole and then extract the highlight section
+    by yourself, e.g. using
+      (sxpath "//child::lst[attribute::name='highlighting']")
