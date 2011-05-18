@@ -8,8 +8,7 @@ search engine from Apache Lucene project.
 We require Solr 3.1 or later.   This moduce accesses Solr via
 its REST interface, so a Solr server process must be running.
 
-As of 5/17/2011, this module requires development HEAD of Gauche;
-Gauche 0.9.1 doesn't work.
+Requires Gauche 0.9.1.
 
 
 SYNOPSYS

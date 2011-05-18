@@ -36,38 +36,35 @@
 ;; Updating
 ;;
 
-(define-method solr-add ((solr <solr>) doc :key (commit #f) (overwrite #t))
+(define (solr-add solr doc :key (commit #f) (overwrite #t))
   (post-request solr "update" 'POST
                 `(add (@ (overwrite ,(xbool overwrite))) ,(record->sxml doc))
                 `((commit ,(xbool commit)))))
 
-(define-method solr-add* ((solr <solr>) docs :key (commit #f) (overwrite #t))
+(define (solr-add* solr docs :key (commit #f) (overwrite #t))
   (post-request solr "update" 'POST
                 `(add (@ (overwrite ,(xbool overwrite)))
                       ,@(map record->sxml docs))
                 `((commit ,(xbool commit)))))
 
-(define-method solr-commit ((solr <solr>)
-                            :key (wait-flush #t) (wait-searcher #t)
-                                 (expunge-deletes #f))
+(define (solr-commit solr :key (wait-flush #t) (wait-searcher #t)
+                               (expunge-deletes #f))
   (post-request solr "update" 'POST
                 `(commit (@ (waitFlush ,(xbool wait-flush))
                             (waitSearcher ,(xbool wait-searcher))
                             (expungeDeletes ,(xbool expunge-deletes))))))
 
-(define-method solr-optimize ((solr <solr>)
-                              :key (wait-flush #t) (wait-searcher #t)
-                                   (max-segments 1))
+(define (solr-optimize solr :key (wait-flush #t) (wait-searcher #t)
+                                 (max-segments 1))
   (post-request solr "update" 'POST
                 `(optimize (@ (waitFlush ,(xbool wait-flush))
                               (waitSearcher ,(xbool wait-searcher))
                               (maxSegments ,max-segments)))))
 
-(define-method solr-rollback ((solr <solr>))
+(define (solr-rollback solr)
   (post-request solr "update" 'POST '(rollback)))
 
-(define-method solr-delete ((solr <solr>)
-                            :key (ids '()) (queries '()) (commit #f))
+(define (solr-delete solr :key (ids '()) (queries '()) (commit #f))
   (post-request solr "update" 'POST
                 `(delete ,@(map (^i `(id ,(x->string i))) ids)
                          ,@(map (^q `(query ,(x->string q))) queries))
@@ -77,13 +74,13 @@
 ;; Querying
 ;;
 
-(define-method solr-query ((solr <solr>) :key (query "*:*")
-                                              (fields "*")
-                                              (search-name "select")
-                                              (score #t)
-                                              (sort #f)
-                                              (params '())
-                                              (result-type 'alist))
+(define (solr-query solr :key (query "*:*")
+                              (fields "*")
+                              (search-name "select")
+                              (score #t)
+                              (sort #f)
+                              (params '())
+                              (result-type 'alist))
   ((result-converter result-type)
    (post-request solr search-name 'GET #f
                  `((q ,query) (fields ,fields) (score ,(xbool score))
