@@ -112,9 +112,15 @@
                               (result-type 'alist))
   ((result-converter result-type)
    (post-request solr search-name 'GET #f
-                 `((q ,query) (fields ,fields) (score ,(xbool score))
+                 `((q ,query) (fl ,(canon-fields fields))
+                   (score ,(xbool score))
                    ,@(cond-list [sort `(sort ,sort)])
                    ,@params))))
+
+(define (canon-fields fields)
+  (if (list? fields)
+    (string-join (map x->string fields) ",")
+    (x->string fields)))
 
 (define (result-converter result-type)
   (case result-type

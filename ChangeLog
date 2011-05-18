@@ -1,0 +1,4 @@
+2011-05-18  Shiro Kawai  <shiro@acm.org>
+
+	* app/solr.scm (solr-query): Fixed :fields parameter translaton to
+	  query string.
