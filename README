@@ -115,11 +115,22 @@ DESCRIPTION
     section in which the hit word in description is highlighted:
 
     (solr-query solr :query "description:video"
-                     :params '((hl "true") (hl.fl "description"))
+                     :params '((hl #t) (hl.fl "description"))
                      :result-type 'whole)
 
-    Note that highlighting information is returned in an additional
-    section, rather than the list of <doc> nodes, so you need to get
-    the result as 'whole and then extract the highlight section
-    by yourself, e.g. using
+    Or, the following call allow faceted search:
+
+    (solr-query solr :query "*:*"
+                     :params '((facet #t)
+                               (facet.field "cat" "inStock"))
+                     :result-type 'whole)
+
+    Note the result-type argument: The highlighting information and
+    faceted search results are returned in additional SXML nodes,
+    rather than the list of <doc> nodes, so you need to get the
+    whole results and then extract the appropriate section.  For
+    example, you can apply the following sxpath procedures to retrieve
+    highlighting or faceted search results, respectively.
+
       (sxpath "//child::lst[attribute::name='highlighting']")
+      (sxpath "//child::lst[attribute::name='facet_counts']")

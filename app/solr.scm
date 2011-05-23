@@ -115,7 +115,9 @@
                  `((q ,query) (fl ,(canon-fields fields))
                    (score ,(xbool score))
                    ,@(cond-list [sort `(sort ,sort)])
-                   ,@params))))
+                   ,@(append-map (^(p) (map (^(v) `(,(car p) ,(value->sxml v)))
+                                            (cdr p)))
+                                 params)))))
 
 (define (canon-fields fields)
   (if (list? fields)
