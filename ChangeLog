@@ -1,3 +1,16 @@
+2011-07-13  Shiro Kawai  <shiro@acm.org>
+
+	* app/solr.scm (solr-query): API Change (INCOMPATIBLE): Instead of
+	  giving result-type to solr-query, we provide a separate utiltiy
+	  functions to extract desired information from the entire sxml
+	  returned from solr-query.  Since there's no way to disable
+	  pagenation of the solr-query results, the caller always need to
+	  check the response count.  Thus merely taking doc nodes and
+	  discarding other information isn't feasible.
+	* app/solr.scm (solr-result->response-count, solr-result->doc-nodes,
+	  solr-result->doc-alist): The utility functions to extract info
+	  from the result of solr-query.
+
 2011-05-18  Shiro Kawai  <shiro@acm.org>
 
 	* app/solr.scm (solr-query): Fixed :fields parameter translaton to

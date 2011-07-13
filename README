@@ -25,7 +25,12 @@ SYNOPSYS
 
   (solr-optimize *solr*)
 
-  (solr-query *solr* :query "author:Shiro Kawai")
+  (define result-sxml
+     (solr-query *solr* :query "author:Shiro Kawai"))
+  (solr-response->result-count result-sxml)
+  (solr-response->doc-sxml result-sxml)
+  (solr-response->doc-nodes result-sxml)
+  (solr-response->doc-alist result-sxml)
 
   (solr-delete *solr* :ids '(123 456)
                       :queries '("author:Shiro Kawai"))
@@ -95,42 +100,70 @@ DESCRIPTION
     returning from this method.
 
   solr-query solr :key (query "*:*") (fields "*") (search-name "select")
-                       (score #t) (sort #f) (params '()) (result-type 'alist)
+                       (score #t) (sort #f) (params '())
 
     Searches document.   See the Solr document for the detailed syntax
     of query, fields and sort.
     If the schema defines alternativea search handlers, you can
     specify one by search-name argument.
 
-    Return value depends on RESULT-TYPE argument.  It can be either
-    one of alist, sxml, or whole.   The default is alist.
-    If it is alist, each record in the query result is converted into
-    alist, and list of alists are returned.
-    If it is sxml, a list of 'doc' nodes (in SXML) are extracted and
-    returned.
-    If it is whole, the entire SXML document (from *TOP*) is returned.
+    Returns SXML representation of the Solr response.  We provide
+    several convenience procedures to extract typical information
+    from the returned value; see below.
 
     PARAMS argument can be used to pass additional parameters.
     For example, the following call can retrieve "highlighting"
     section in which the hit word in description is highlighted:
 
     (solr-query solr :query "description:video"
-                     :params '((hl #t) (hl.fl "description"))
-                     :result-type 'whole)
+                     :params '((hl #t) (hl.fl "description")))
 
     Or, the following call allow faceted search:
 
     (solr-query solr :query "*:*"
                      :params '((facet #t)
-                               (facet.field "cat" "inStock"))
-                     :result-type 'whole)
+                               (facet.field "cat" "inStock")))
 
-    Note the result-type argument: The highlighting information and
-    faceted search results are returned in additional SXML nodes,
-    rather than the list of <doc> nodes, so you need to get the
-    whole results and then extract the appropriate section.  For
-    example, you can apply the following sxpath procedures to retrieve
-    highlighting or faceted search results, respectively.
+    Note that the highlighting information and faceted search
+    results are returned in additional SXML nodes,
+    rather than the list of <doc> nodes, so you need to extract
+    the appropriate section.  For example, you can apply the
+    following sxpath procedures to retrieve highlighting or
+    faceted search results, respectively.
 
       (sxpath "//child::lst[attribute::name='highlighting']")
       (sxpath "//child::lst[attribute::name='facet_counts']")
+
+
+  solr-response->result-count sxml
+
+    Returns three values: The total number of hits of the query,
+    the start count, and the number of records in this response.
+
+    Solr pagenates the result.  By default, the result contains
+    up to 10 documents; you can change it by passing 'rows' parameter.
+    The following example asks 20 documents at at time, and
+    supposes that there are actually 34 matched documents.
+
+      (let1 r (solr-query solr :query "foo:bar"
+                               :params '((rows 20)))
+        (solr-response->result-count r)
+      ;=> 34, 0 and 20, for example.
+
+    To extract the rest of the result, you pass 'start' parameter.
+
+      (let1 r (solr-query solr :query "foo:bar"
+                               :params '((rows 20) (start 20)))
+        (solr-response->result-count r)
+      ;=> 34, 20 and 14, for example.
+
+
+  solr-response->doc-nodes sxml
+
+    Returns the list of <doc> nodes in the result SXML.
+
+
+  solr-response->doc-alist sxml
+
+    Returns the list of documents, each converted to alist from
+    <doc> sxml node.

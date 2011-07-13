@@ -47,7 +47,9 @@
 
   (export <solr> <solr-error>
           solr-add solr-add* solr-commit solr-optimize solr-rollback
-          solr-delete solr-query)
+          solr-delete
+          solr-query solr-result->response-count solr-result->doc-nodes
+          solr-result->doc-alist)
   )
 (select-module app.solr)
 
@@ -103,38 +105,43 @@
 ;; Querying
 ;;
 
+;; API
 (define (solr-query solr :key (query "*:*")
                               (fields "*")
                               (search-name "select")
                               (score #t)
                               (sort #f)
-                              (params '())
-                              (result-type 'alist))
-  ((result-converter result-type)
-   (post-request solr search-name 'GET #f
-                 `((q ,query) (fl ,(canon-fields fields))
-                   (score ,(xbool score))
-                   ,@(cond-list [sort `(sort ,sort)])
-                   ,@(append-map (^(p) (map (^(v) `(,(car p) ,(value->sxml v)))
-                                            (cdr p)))
-                                 params)))))
+                              (params '()))
+  (post-request solr search-name 'GET #f
+                `((q ,query) (fl ,(canon-fields fields))
+                  (score ,(xbool score))
+                  ,@(cond-list [sort `(sort ,sort)])
+                  ,@(append-map (^p (map (^v `(,(car p) ,(value->sxml v)))
+                                         (cdr p)))
+                                params))))
 
 (define (canon-fields fields)
   (if (list? fields)
     (string-join (map x->string fields) ",")
     (x->string fields)))
 
-(define (result-converter result-type)
-  (case result-type
-    [(sxml)  extract-docs]
-    [(whole) identity]
-    [(alist) (^x (map sxml-record->alist (extract-docs x)))]
-    ;; TODO: support other dictionary types.
-    [else
-     (error "result-converter must be either one of sxml, whole, or alist, \
-             but got:" result-type)]))
+;; API
+(define solr-result->doc-nodes (sxpath '(// doc)))
 
-(define extract-docs (sxpath '(// doc)))
+;; API
+(define (solr-result->doc-alist sxml)
+  (map sxml-record->alist (solr-result->doc-nodes sxml)))
+
+;; API
+;;  returns total # of hits, start count and # of nodes in the response.
+(define (solr-result->response-count sxml)
+  (if-let1 node (extract-response-node sxml)
+    (values (sxml:num-attr node 'numFound)
+            (sxml:num-attr node 'start)
+            (length (sxml:content node)))))
+
+(define extract-response-node
+  (if-car-sxpath '(// "result[attribute::name='response']")))
 
 (define (sxml-record->alist doc)
   (map (^n (cons (string->symbol (sxml-field->key n)) (sxml-field->value n)))
